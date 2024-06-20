@@ -2,6 +2,7 @@ package contest
 
 import (
 	"bytes"
+	"fmt"
 	"github.com/WiiLink24/MiiContestChannel/common"
 	"math"
 )
@@ -33,7 +34,7 @@ func (t ThumbnailS) ToBytes(_ any) []byte {
 	return buffer.Bytes()
 }
 
-func MakeThumbnail(data []byte, path string, contestId uint32) error {
+func MakeThumbnail(data []byte, contestId uint32) error {
 	thumbnail := ThumbnailS{
 		Header: ThumbnailHeader{
 			Type:         common.Thumbnail,
@@ -45,5 +46,6 @@ func MakeThumbnail(data []byte, path string, contestId uint32) error {
 		},
 		Data: data,
 	}
-	return common.Write(thumbnail, path)
+
+	return common.Write(thumbnail, fmt.Sprintf("contest/%d/thumbnail.ces", contestId))
 }

@@ -169,12 +169,6 @@ func MakeContestInfos(pool *pgxpool.Pool, ctx context.Context) error {
 				contest.Status = CCLosed
 			}
 		} else {
-			// TODO: Remove this it shouldn't be here
-			err = MakeBestList(pool, ctx, contest.ContestID)
-			if err != nil {
-				return err
-			}
-
 			err = setRankings(pool, ctx, contest.ContestID)
 			if err != nil {
 				return err

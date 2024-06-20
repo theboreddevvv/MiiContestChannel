@@ -24,7 +24,7 @@ type ContestDetail struct {
 	Unknown2       uint32
 	ContestID2     uint32
 	Status         ContestStatus
-	Options        uint8
+	Options        Option
 	_              uint16
 	EntryCount     uint32
 	Padding2       [20]byte
@@ -39,17 +39,35 @@ func (c ContestDetail) ToBytes(data any) []byte {
 func MakeContestDetail(pool *pgxpool.Pool, ctx context.Context, contestId uint32, startTime, endTime *time.Time, description string, status ContestStatus) error {
 	// Get entry numbers
 	var entryCount uint32
-	err := pool.QueryRow(ctx, GetNumberOfContestMiis, contestId).Scan(&entryCount)
-	if err != nil {
-		return err
+	var hasThumbnail bool
+	var hasSpecialAward bool
+	if status != COpen {
+		err := pool.QueryRow(ctx, GetNumberOfContestMiis, contestId).Scan(&entryCount, &hasThumbnail, &hasSpecialAward)
+		if err != nil {
+			return err
+		}
+	} else {
+		err := pool.QueryRow(ctx, GetContestThumbnailStatus, contestId).Scan(&hasThumbnail, &hasSpecialAward)
+		if err != nil {
+			return err
+		}
 	}
-
-	_topic := []byte("Funny")
 
 	var topic [32]byte
 	var tempDescription [64]byte
-	copy(topic[:], _topic)
+	copy(topic[:], description)
 	copy(tempDescription[:], description)
+
+	var options Option
+	options |= Worldwide
+	options |= NicknameChanging
+	if hasThumbnail {
+		options |= Thumbnail
+	}
+
+	if hasSpecialAward {
+		options |= SpecialAward
+	}
 
 	detail := ContestDetail{
 		Tag:            common.ContestDetail,
@@ -62,13 +80,12 @@ func MakeContestDetail(pool *pgxpool.Pool, ctx context.Context, contestId uint32
 		TagSize:        136,
 		Unknown2:       1,
 		ContestID2:     contestId,
-		// TODO: Bitfield
-		Status:      status,
-		Options:     0,
-		EntryCount:  entryCount,
-		Padding2:    [20]byte{},
-		Topic:       topic,
-		Description: tempDescription,
+		Status:         status,
+		Options:        options,
+		EntryCount:     entryCount,
+		Padding2:       [20]byte{},
+		Topic:          topic,
+		Description:    tempDescription,
 	}
 
 	return common.Write(detail, fmt.Sprintf("contest/%d/con_detail1.ces", contestId))

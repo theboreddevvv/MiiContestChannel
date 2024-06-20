@@ -6,8 +6,10 @@ import (
 	"crypto/cipher"
 	"crypto/hmac"
 	"crypto/sha1"
+	"fmt"
 	"github.com/wii-tools/lzx/lz10"
 	"os"
+	"path/filepath"
 )
 
 var (
@@ -87,5 +89,12 @@ func (w *writerState) Write(path string) error {
 	// Encrypted data
 	buffer.Write(w.encryptedData)
 
-	return os.WriteFile(path, buffer.Bytes(), 0666)
+	// Create directories if they don't exist
+	filePath := fmt.Sprintf("%s/%s", GetConfig().AssetsPath, path)
+	err := os.MkdirAll(filepath.Dir(filePath), 0750)
+	if err != nil {
+		return err
+	}
+
+	return os.WriteFile(filePath, buffer.Bytes(), 0666)
 }

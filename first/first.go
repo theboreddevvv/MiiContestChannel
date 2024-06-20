@@ -1,6 +1,7 @@
 package first
 
 import (
+	"fmt"
 	"github.com/WiiLink24/MiiContestChannel/common"
 	"math"
 )
@@ -19,45 +20,62 @@ type First struct {
 	/*
 		3rd lowest bits are unknown
 		4th bit: Marquee Text
-		5th bit: Re-enable initials
-		6th bit: Disable initials
-		7th bit: Show Mii Artisan
-		8th bit: Show number of Miis in Posting Plaza
+		3rd bit: Re-enable initials
+		2nd bit: Disable initials
+		1st bit: Show Mii Artisan
+		0th bit: Show number of Miis in Posting Plaza
 	*/
 	FirstBitField uint8
 	_             uint8
 	/*
 		The below toggle the languages available for the message board service.
 
-		1st bit: Unknown
-		2nd bit: Dutch
-		3rd bit: Italian
+		7th bit: Unknown
+		6th bit: Dutch
+		5th bit: Italian
 		4th bit: Spanish
-		5th bit: French
-		6th bit: German
-		7th bit: English
-		8th bit: Japanese
+		3rd bit: French
+		2nd bit: German
+		1st bit: English
+		0th bit: Japanese
 	*/
-	SecondBitField uint8
+	SecondBitField common.LanguageFlag
 }
 
 func (f First) ToBytes(data any) []byte {
 	return common.ToBytes(data)
 }
 
-func MakeFirst() error {
-	first := First{
-		Type:             common.FirstList,
-		DiscontinuedFlag: 0,
-		CountryCode:      110,
-		Padding:          [8]byte{math.MaxUint8, math.MaxUint8, math.MaxUint8, math.MaxUint8, math.MaxUint8, math.MaxUint8, math.MaxUint8, math.MaxUint8},
-		Tag:              common.FirstList,
-		TagSize:          12,
-		Unk:              1,
-		CountryGroup:     151,
-		FirstBitField:    0x10,
-		SecondBitField:   154,
+func GetSupportedLanguages(countryCode uint8) common.LanguageFlag {
+	if 8 <= countryCode && countryCode <= 52 {
+		return common.English | common.French | common.Spanish
+	} else if 64 <= countryCode && countryCode <= 110 {
+		return common.English | common.German | common.French | common.Spanish | common.Italian | common.Dutch
 	}
 
-	return common.Write(first, "first/110.ces")
+	return common.Japanese | common.English | common.German | common.French | common.Spanish | common.Italian | common.Dutch
+}
+
+func MakeFirst() error {
+	for _, code := range common.CountryCodes {
+		first := First{
+			Type:             common.FirstList,
+			DiscontinuedFlag: 0,
+			CountryCode:      code,
+			Padding:          [8]byte{math.MaxUint8, math.MaxUint8, math.MaxUint8, math.MaxUint8, math.MaxUint8, math.MaxUint8, math.MaxUint8, math.MaxUint8},
+			Tag:              common.FirstList,
+			TagSize:          12,
+			Unk:              1,
+			CountryGroup:     151,
+			FirstBitField:    19,
+			SecondBitField:   GetSupportedLanguages(code),
+		}
+
+		err := common.Write(first, fmt.Sprintf("first/%s.ces", common.ZFill(int(code), 3)))
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }

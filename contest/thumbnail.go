@@ -7,12 +7,12 @@ import (
 	"math"
 )
 
-type ThumbnailS struct {
-	Header ThumbnailHeader
+type Photo struct {
+	Header PhotoHeader
 	Data   []byte
 }
 
-type ThumbnailHeader struct {
+type PhotoHeader struct {
 	Type         common.ListTag
 	_            uint16
 	ContestId    uint32
@@ -26,7 +26,7 @@ type ThumbnailHeader struct {
 	_            [24]byte
 }
 
-func (t ThumbnailS) ToBytes(_ any) []byte {
+func (t Photo) ToBytes(_ any) []byte {
 	buffer := new(bytes.Buffer)
 	common.WriteBinary(buffer, t.Header)
 	common.WriteBinary(buffer, t.Data)
@@ -34,18 +34,22 @@ func (t ThumbnailS) ToBytes(_ any) []byte {
 	return buffer.Bytes()
 }
 
-func MakeThumbnail(data []byte, contestId uint32) error {
-	thumbnail := ThumbnailS{
-		Header: ThumbnailHeader{
-			Type:         common.Thumbnail,
+func MakePhoto(photoType common.ListTag, data []byte, contestId uint32) error {
+	photo := Photo{
+		Header: PhotoHeader{
+			Type:         photoType,
 			ContestId:    contestId,
 			Padding:      [8]byte{math.MaxUint8, math.MaxUint8, math.MaxUint8, math.MaxUint8, math.MaxUint8, math.MaxUint8, math.MaxUint8, math.MaxUint8},
-			ThumbnailTag: common.Thumbnail,
+			ThumbnailTag: photoType,
 			TagSize:      uint16(len(data) + 32),
 			Unknown:      1,
 		},
 		Data: data,
 	}
 
-	return common.Write(thumbnail, fmt.Sprintf("contest/%d/thumbnail.ces", contestId))
+	if photoType == common.Thumbnail {
+		return common.Write(photo, fmt.Sprintf("contest/%d/thumbnail.ces", contestId))
+	} else {
+		return common.Write(photo, fmt.Sprintf("contest/%d/photo.ces", contestId))
+	}
 }

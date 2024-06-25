@@ -24,6 +24,7 @@ var (
 	MiiPairNumber   = ListTag{'P', 'N'}
 	SpecialList     = ListTag{'I', 'L'}
 	NumberInfo      = ListTag{'N', 'I'}
+	Souvenir        = ListTag{'P', 'H'}
 )
 
 // LanguageFlag is a bitmask that allows for toggling supported languages for a country.

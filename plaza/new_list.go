@@ -7,6 +7,11 @@ import (
 	"github.com/jackc/pgx/v4/pgxpool"
 )
 
+const GetMiis = `SELECT miis.entry_id, miis.initials, miis.perm_likes, miis.skill, miis.country_id, miis.mii_data, 
+       			artisans.mii_data, artisans.artisan_id, artisans.is_master 
+				FROM miis, artisans WHERE miis.artisan_id = artisans.artisan_id 
+				ORDER BY miis.likes DESC LIMIT 100`
+
 func MakeNewList(pool *pgxpool.Pool, ctx context.Context) error {
 	var miis []common.MiiWithArtisan
 	rows, err := pool.Query(ctx, GetMiis)

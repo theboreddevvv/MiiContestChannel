@@ -10,7 +10,7 @@ import (
 const GetBargainMiis = `SELECT miis.entry_id, miis.initials, miis.perm_likes, miis.skill, miis.country_id, miis.mii_data, 
        			artisans.mii_data, artisans.artisan_id, artisans.is_master 
 				FROM miis, artisans WHERE miis.artisan_id = artisans.artisan_id 
-				ORDER BY random() DESC LIMIT 150 `
+				ORDER BY random() DESC LIMIT 150`
 
 func MakeBargainList(pool *pgxpool.Pool, ctx context.Context) error {
 	var miis []common.MiiWithArtisan
@@ -39,7 +39,8 @@ func MakeBargainList(pool *pgxpool.Pool, ctx context.Context) error {
 	}
 
 	for i := 1; i < 11; i++ {
-		if i == 3 {
+		// Limit to 5 pages
+		if i == 9 {
 			// As per old RiiConnect24 code, after 3 generations no miis are added to a list.
 			miis = make([]common.MiiWithArtisan, 0)
 		}

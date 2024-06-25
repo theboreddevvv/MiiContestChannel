@@ -7,16 +7,66 @@ import (
 )
 
 const (
-	GetMiis = `SELECT miis.entry_id, miis.initials, miis.perm_likes, miis.skill, miis.country_id, miis.mii_data, 
+	GetPopularMiis = `SELECT miis.entry_id, miis.initials, miis.perm_likes, miis.skill, miis.country_id, miis.mii_data, 
        			artisans.mii_data, artisans.artisan_id, artisans.is_master 
 				FROM miis, artisans WHERE miis.artisan_id = artisans.artisan_id 
-				ORDER BY miis.likes DESC LIMIT 100`
+				ORDER BY miis.likes LIMIT $1`
+
+	GetPermPopularMiis = `SELECT miis.entry_id, miis.initials, miis.perm_likes, miis.skill, miis.country_id, miis.mii_data, 
+       			artisans.mii_data, artisans.artisan_id, artisans.is_master 
+				FROM miis, artisans WHERE miis.artisan_id = artisans.artisan_id AND miis.perm_likes > 21
+				ORDER BY miis.entry_id LIMIT $1`
+
+	GetNumberOfMiisWithLikes = `SELECT COUNT(*) FROM miis WHERE likes > 0`
+
+	ResetMiiLikes = `UPDATE miis SET likes = 0`
 )
 
 func MakeSpotList(pool *pgxpool.Pool, ctx context.Context) error {
-	// TODO: This is generally incorrect, it should be a mix of popular and random miis.
+	var numberOfMiisWithLikes int
+	err := pool.QueryRow(ctx, GetNumberOfMiisWithLikes).Scan(&numberOfMiisWithLikes)
+	if err != nil {
+		return err
+	}
+
+	// The list can only have 100 miis. If there are less than 100 miis, we will fix with random miis with have a
+	// high perm like count.
+	var extraCount int
+	if numberOfMiisWithLikes > 100 {
+		numberOfMiisWithLikes = 100
+	} else {
+		extraCount = 100 - numberOfMiisWithLikes
+	}
+
+	// First handle popular
 	var miis []common.MiiWithArtisan
-	rows, err := pool.Query(ctx, GetMiis)
+	rows, err := pool.Query(ctx, GetPopularMiis, numberOfMiisWithLikes)
+	if err != nil {
+		return err
+	}
+
+	for rows.Next() {
+		var isMaster bool
+		var likes int
+		mii := common.MiiWithArtisan{}
+		err = rows.Scan(&mii.EntryNumber, &mii.Initials, &likes, &mii.Skill, &mii.CountryCode, &mii.MiiData,
+			&mii.ArtisanMiiData, &mii.ArtisanId, &isMaster)
+		if err != nil {
+			return err
+		}
+
+		// Downcast to u8 as database contains numbers larger.
+		mii.Likes = uint8(likes)
+
+		if isMaster {
+			mii.IsMasterArtisan = 1
+		}
+
+		miis = append(miis, mii)
+	}
+
+	// Now handle the random miis.
+	rows, err = pool.Query(ctx, GetPermPopularMiis, extraCount)
 	if err != nil {
 		return err
 	}
@@ -42,6 +92,12 @@ func MakeSpotList(pool *pgxpool.Pool, ctx context.Context) error {
 	}
 
 	err = MakeList(common.SpotList, miis, "spot_list.ces", nil)
+	if err != nil {
+		return err
+	}
+
+	// Finally reset the temp likes.
+	_, err = pool.Exec(ctx, ResetMiiLikes)
 	if err != nil {
 		return err
 	}

@@ -21,12 +21,15 @@ func MakeBargainList(pool *pgxpool.Pool, ctx context.Context) error {
 
 	for rows.Next() {
 		var isMaster bool
+		var likes int
 		mii := common.MiiWithArtisan{}
-		err = rows.Scan(&mii.EntryNumber, &mii.Initials, &mii.Likes, &mii.Skill, &mii.CountryCode, &mii.MiiData,
+		err = rows.Scan(&mii.EntryNumber, &mii.Initials, &likes, &mii.Skill, &mii.CountryCode, &mii.MiiData,
 			&mii.ArtisanMiiData, &mii.ArtisanId, &isMaster)
 		if err != nil {
 			return err
 		}
+
+		mii.Likes = uint8(likes)
 
 		if isMaster {
 			mii.IsMasterArtisan = 1

@@ -96,10 +96,13 @@ func MakePopCraftsList(pool *pgxpool.Pool, ctx context.Context) error {
 	for i, artisan := range bareArtisans {
 		var lastPost *time.Time
 		var isMaster bool
-		err = pool.QueryRow(ctx, GetArtisan, artisan.ArtisanId).Scan(&artisan.ArtisanMiiData, &artisan.Likes, &artisan.CountryCode, &isMaster, &lastPost)
+		var likes int
+		err = pool.QueryRow(ctx, GetArtisan, artisan.ArtisanId).Scan(&artisan.ArtisanMiiData, &likes, &artisan.CountryCode, &isMaster, &lastPost)
 		if err != nil {
 			return err
 		}
+
+		artisan.Likes = uint8(likes)
 
 		if isMaster {
 			artisan.IsMasterArtisan = 1

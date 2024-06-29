@@ -28,7 +28,8 @@ func main() {
 	err = first.MakeFirst()
 	common.CheckError(err)
 
-	first.MakeAddition()
+	err = first.MakeAddition()
+	common.CheckError(err)
 
 	err = contest.MakeContestInfos(pool, ctx)
 	common.CheckError(err)

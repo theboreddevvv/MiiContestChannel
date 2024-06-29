@@ -2,9 +2,21 @@ package first
 
 import (
 	"bytes"
+	_ "embed"
+	"encoding/json"
 	"github.com/WiiLink24/MiiContestChannel/common"
 	"math"
 )
+
+type Root struct {
+	Countries []Child `json:"countries"`
+	Skills    []Child `json:"skills"`
+}
+
+type Child struct {
+	Code uint32 `json:"code"`
+	Name string `json:"name"`
+}
 
 type Addition struct {
 	Header       AdditionHeader
@@ -42,6 +54,9 @@ type MarqueeField struct {
 	Text        [1536]byte
 }
 
+//go:embed addition.json
+var additionJson []byte
+
 func (a Addition) ToBytes(any) []byte {
 	buffer := new(bytes.Buffer)
 	common.WriteBinary(buffer, a.Header)
@@ -59,23 +74,15 @@ func (a Addition) ToBytes(any) []byte {
 	return buffer.Bytes()
 }
 
-func MakeAddition() {
+func MakeAddition() error {
 	marqueeText := []byte("WiiLink Mii Contest Channel!!!!")
 	var actual [1536]byte
 	copy(actual[:], marqueeText)
 
-	country := CountryField{
-		Type:        [2]byte{'N', 'H'},
-		FieldSize:   200,
-		CountryCode: 18,
-		Text:        [192]byte{'C', 'a', 'n', 'a', 'd', 'a'},
-	}
-
-	skill := SkillField{
-		Type:      [2]byte{'N', 'J'},
-		FieldSize: 104,
-		SkillId:   1,
-		Text:      [96]byte{'C', 'a', 'n', 'a', 'd', 'a'},
+	var root Root
+	err := json.Unmarshal(additionJson, &root)
+	if err != nil {
+		return err
 	}
 
 	addition := Addition{
@@ -84,8 +91,8 @@ func MakeAddition() {
 			CountryGroup: 201,
 			Padding:      [8]byte{math.MaxUint8, math.MaxUint8, math.MaxUint8, math.MaxUint8, math.MaxUint8, math.MaxUint8, math.MaxUint8, math.MaxUint8},
 		},
-		Countries: []CountryField{country},
-		Skills:    []SkillField{skill},
+		Countries: []CountryField{},
+		Skills:    []SkillField{},
 		MarqueeField: MarqueeField{
 			Tag:         [2]byte{'N', 'W'},
 			SectionSize: 1544,
@@ -94,5 +101,29 @@ func MakeAddition() {
 		},
 	}
 
-	common.Write(addition, "addition/201.ces")
+	for _, country := range root.Countries {
+		var text [192]byte
+		copy(text[:], country.Name)
+
+		addition.Countries = append(addition.Countries, CountryField{
+			Type:        [2]byte{'N', 'H'},
+			FieldSize:   200,
+			CountryCode: country.Code,
+			Text:        text,
+		})
+	}
+
+	for _, skill := range root.Skills {
+		var text [96]byte
+		copy(text[:], skill.Name)
+
+		addition.Skills = append(addition.Skills, SkillField{
+			Type:      [2]byte{'N', 'J'},
+			FieldSize: 104,
+			SkillId:   skill.Code,
+			Text:      text,
+		})
+	}
+
+	return common.Write(addition, "addition/201.ces")
 }

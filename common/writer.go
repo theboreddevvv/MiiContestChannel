@@ -36,9 +36,10 @@ func Write(data Writable, path string) error {
 		return err
 	}
 
-	for len(writer.compressedData)%16 != 0 {
+	for len(writer.compressedData)%aes.BlockSize != 0 {
 		writer.compressedData = append(writer.compressedData, 0)
 	}
+
 	err = writer.Encrypt()
 	if err != nil {
 		return err

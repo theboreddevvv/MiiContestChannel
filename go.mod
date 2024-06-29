@@ -2,7 +2,7 @@ module github.com/WiiLink24/MiiContestChannel
 
 go 1.19
 
-require github.com/wii-tools/lzx v0.0.0-20221114001118-aaec5e424e43
+require github.com/wii-tools/lzx v0.0.0-20231115152519-4c1183c96cc6
 
 require (
 	github.com/jackc/chunkreader/v2 v2.0.1 // indirect

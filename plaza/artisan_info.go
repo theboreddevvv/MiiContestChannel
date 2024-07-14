@@ -11,8 +11,8 @@ type Info struct {
 	CountryRegion uint32
 	EntryNumber   uint32
 	ErrorCode     uint32
-	_             [12]byte
-	Padding       [4]byte
+	_             [8]byte
+	Padding       [8]byte
 	MiiInfo
 	ArtisanInfo
 }
@@ -52,7 +52,7 @@ func MakeArtisanInfo(entryNumber uint32, miiInfo *MiiInfo, artisanInfo *ArtisanI
 		CountryRegion: 0,
 		EntryNumber:   entryNumber,
 		ErrorCode:     0,
-		Padding:       [4]byte{math.MaxUint8, math.MaxUint8, math.MaxUint8, math.MaxUint8},
+		Padding:       [8]byte{math.MaxUint8, math.MaxUint8, math.MaxUint8, math.MaxUint8, math.MaxUint8, math.MaxUint8, math.MaxUint8, math.MaxUint8},
 		MiiInfo:       *miiInfo,
 		ArtisanInfo:   *artisanInfo,
 	}

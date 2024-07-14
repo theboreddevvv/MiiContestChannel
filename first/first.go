@@ -71,7 +71,7 @@ func MakeFirst() error {
 			SecondBitField:   GetSupportedLanguages(code),
 		}
 
-		err := common.Write(first, fmt.Sprintf("first/%s.ces", common.ZFill(int(code), 3)))
+		err := common.Write(first, fmt.Sprintf("first/%d.ces", code))
 		if err != nil {
 			return err
 		}

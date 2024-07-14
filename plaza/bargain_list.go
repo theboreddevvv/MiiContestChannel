@@ -40,7 +40,7 @@ func MakeBargainList(pool *pgxpool.Pool, ctx context.Context) error {
 
 	for i := 1; i < 11; i++ {
 		// Limit to 5 pages
-		if i == 9 {
+		if i == 3 {
 			// As per old RiiConnect24 code, after 3 generations no miis are added to a list.
 			miis = make([]common.MiiWithArtisan, 0)
 		}

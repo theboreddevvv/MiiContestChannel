@@ -6,11 +6,11 @@ import (
 	"math"
 )
 
-func MakeNameSearch(miis []common.MiiWithArtisan, entryNumber uint32) []byte {
+func MakeSearchList(listType common.ListTag, miis []common.MiiWithArtisan, entryNumber uint32) []byte {
 	list := MiiList{}
 
 	header := Header{
-		Tag:           common.NameSearch,
+		Tag:           listType,
 		CountryRegion: 0,
 		ListNumber:    entryNumber,
 		ErrorCode:     0,

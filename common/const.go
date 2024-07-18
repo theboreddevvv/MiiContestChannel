@@ -29,6 +29,7 @@ var (
 	MiiInfo         = ListTag{'I', 'M'}
 	OwnSearch       = ListTag{'O', 'S'}
 	NameSearch      = ListTag{'N', 'S'}
+	Search          = ListTag{'S', 'R'}
 )
 
 // LanguageFlag is a bitmask that allows for toggling supported languages for a country.
